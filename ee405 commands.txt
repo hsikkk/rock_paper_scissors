@@ -1,0 +1,169 @@
+% Initialization
+ee405('com3')         % open serial port in windows
+ee405('/dev/ttyUSB0') % open serial port in linux
+ee405('EE405_001')    % open bluetooth device
+
+% Read most recent sensor data
+ee405, ee405(id) % returns the most recent sensor data
+    % id, ver, vcpu, seq, acc, mag, hum, temp, light, is_playing, joy_stick,
+    % date_time_valid, photo_tr, rx_buffer_free
+    % specify board id if there are multiple boards
+    % humidity & temperature are measured periodically (default = 1min)
+
+% Port related commands
+ee405('reset')  % reset all connections
+ee405('close')  % close a connection
+ee405('open')   % open a connection
+ee405('closeall') % close all connections
+ee405('openall') % open all connections
+
+% Help
+ee405('help')
+
+% Servo motor related commands
+ee405('servo',id,pos)                   % set the servo position 'pos' with fastest moving speed for servo # id (normal mode)
+    % pos is from 0 to 1023
+ee405('servo',id,pos,speed)             % set the servo position 'pos' with moving speed 'speed' for servo # id (normal mode)
+    % speed is either 0 (fastest possible speed) or from 1 (slowest) to 1023 (fast)
+ee405('servo',[id1 id2 ... idn],[pos1 pos2 ... posn]) % for controlling multiple servos (normal mode)
+ee405('servo',[id1 id2 ... idn],[pos1 pos2 ... posn],[speed1 speed2 ... speedn]) 
+    % for controlling multiple servos (normal mode)
+
+ee405('servospeed',id,speed)            % set the servo speed (-1023 to 1023) in wheel mode
+ee405('servospeed',[id1 id2 ... idn],[speed1 speed2 ... speedn]) % for controlling speed of multiple servos (wheel mode)
+
+ee405('servomonitor',[id1 id2 ... idn]) % start monitoring servos with [id1 id2 ... idn].
+    % this needs to be done before using 'getservo' commands
+pos=ee405('getservo', id)               % returns position of servo # id
+    % pos=-1 will be returned if there's no response from the servo
+[pos,speed]=ee405('getservo',id)        % returns position and speed
+[pos,speed,load]=ee405('getservo',id)   % returns position, speed and load
+
+ee405('servostatus',id)                 % returns the current status of servo # id
+ee405('servomode', id)                  % returns the current servo mode, i.e., 'wheel' or 'normal' mode
+ee405('servonormalmode', id)            % set to normal mode for servo # id
+ee405('servowheelmode', id)             % set to wheel mode for servo # id
+
+ee405('disabletorque', id)              % disable the torque of the servo # id
+ee405('enabletorque', id)               % enable the torque of the servo # id
+
+% Zigbee related commands
+ee405('zigbeerx')                       % returns a received zigbee packet in the queue
+                                        % returns [] if nothing in the queue
+ee405('zigbee', dest_addr, [byte1 byte2 ...]) % transmit a zigbee packet
+    % dest_addr is the destination address
+    % maximum payload size is 114 bytes
+    % byte1 byte2 ... are bytes (0 ~ 255)
+ee405('zigbeerate',rate)                % change the data rate for zigbee
+                                        % 0(250 kbps), 1(500 kbps), 2(1000kbps), or 3(2000kbps)
+ee405('zigbeechannel', channel)         % change the channel for zigbee
+                                        % channel is from 11 to 26
+ee405('zigbeemode', mode)               % set zigbee mode. mode should be 'promiscuous' or 'normal'
+ee405('zigbeestatus')                   % returns zigbee status
+ee405('zigbeetxpower', power)           % change the transmit power for zigbee
+    % mapping between pwr (0 ~ 15) and tx power in dBm
+    % pwr   dBm
+    %===========
+    %   0    3
+    %   1    2.8
+    %   2    2.3
+    %   3    1.8
+    %   4    1.3
+    %   5    0.7
+    %   6    0
+    %   7    -1
+    %   8    -2
+    %   9    -3
+    %  10    -4
+    %  11    -5
+    %  12    -7
+    %  13    -9
+    %  14    -12
+    %  15    -17
+ee405('zigbeetxtest', dest_addr, data, channel, power)
+    % Force the board to transmit sensor data repeatedly (every 20msec)
+    % after the board is powered with battery & joy stick == left while powering up.
+    % This is disabled when the board is power by USB.
+    % Channel will be 11 if not specified.
+    % Power will be 0 (3dBm) if not specified.
+    % If data is not specified or data==[], then sensor reading will be transmitted
+    %   (accelerometer, magnetic sensor, humidity, temperature, light, joy_stick).
+    % Use ee405('zigbeesensordata', source_id) to get sensor data from the received zigbee packet.
+ee405('zigbeesensordata', source_id)
+    % Get sensor data transmitted by another board that is configured to
+    % transmit sensor data periodically using ee405('zigbeetxtest') command.
+    % need to specify the source id
+
+% Analog and digital input and output
+ee405('analoginputenable')              % enable A/D converter
+    % A/D converter value is obtained 32 times per second
+    % use ee405 or ee405(id) to get the most recent value of the A/D converter reading
+    % A/D converter input is the ADC+ port
+    % 0~3.3V is converted to 0~1023 (10 bits)
+ee405('analogoutput',value)
+    % set the analog output at the DAC port
+    % 'value' is a 12-bit integer (0 ~ 4095)
+    % 0 is 0V and 4095 is 3.3V
+ee405('digitalinputenable')             % enable digital input port
+    
+ee405('digitaloutput',value)
+    % set the digital output pin (PWM)
+    % 'value' is 0 or 1
+
+% Time related commands
+ee405('gettime')                        % get time from the real time clock in the ee405 board
+ee405('settime', [year month date hour min sec])    % set time for the ee405 board
+    % 'year: 2000 ~ 2099, month: 1 ~ 12, date: 1 ~ 31, hour: 0 ~ 23, min: 0 ~ 59, sec: 0 ~ 59'
+ee405('settime')                        % set time using PC's clock 
+
+% LED and photo transistor related commands
+ee405('fullcolorled',color_data)        % controls full color LED
+    % 'color_data' is a matrix of size N*3, where N is the number of LED's
+    % for each LED, (R,G,B) color values are specified as a row vector of 'color_data'
+    % each color value is from 0 to 255
+
+ee405('irled', value)                   % turn on IR LED (value==1) or turn off (value==0)
+ee405(''phototrenable'', value)         % enable photo transistor (value==1) or disable (value==0)
+
+ee405('led',[red green yellow])         % turn on or off the LED's (red, green, yellow are 0 or 1)
+
+% MIDI related commands
+ee405('midi', [byte1 byte2 ...])        % send commands to the MIDI device
+    % byte1, byte2, ... are 0~255
+ee405('midirxenable',value)             % enable midi rx (value==1) or disable midi rx (value==0)
+ee405('midirx')                         % returns a received midi packet in the queue
+                                        % [] is returned if nothing in the queue
+
+% Audio output 
+ee405('say','a.wav')                    % play audio file 'a.wav' stored in the micro SD card
+    % for the list of files in the card, see 'audio_files.txt'
+    % if there something being played already, this command is ignored
+    % to check if something is being played, check 'is_playing' returned by ee405 command
+
+ee405('sayqueue','a.wav')               % play audio file 'a.wav'. if something is being played
+    % already, then put it is the play queue
+
+ee405('stopaudio')                      % stops audio
+
+ee405('saynum',num)                     % say number, where 'num' is an integer from -999 to 999
+
+ee405('saytime')                        % say time
+
+ee405('setvolume',vol)                  % set the audio volume to 'vol'
+    % vol is from 0 (loudest) to 3 (quietest)
+
+% Sensor period
+ee405('sensorperiod',period)            % change the sensing period for humidity and temperature sensors
+    % period is between 1 and 255
+
+% GPS related commands
+ee405('gpsenable', value)               % enable gps (value==1) or disable gps (value==0)
+ee405('gps')                            % returns most recent gps data
+                                        % returns [] if gps is not enabled
+
+% For debugging, etc.
+ee405('recent')   % returns the last received packet (for debugging)
+ee405('status')   % returns status (for debugging)
+ee405('firmware', file_name) % udpate firmware
+ee405('ram',start_address,length)       % read SRAM content of the ee405 board
+    % start_address is from 0 to 65535
